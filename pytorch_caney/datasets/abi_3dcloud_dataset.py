@@ -57,12 +57,13 @@ class AbiToa3DCloudDataset(NonGeoDataset):
     # _load_file
     # -------------------------------------------------------------------------
     def _load_file(self, path: Path):
-        if Path(path).suffix == '.npy' or Path(path).suffix == '.npz':
+        suffix = Path(path).suffix.lower()
+        if suffix in ['.npy', '.npz']:
             return np.load(path, allow_pickle=True)
-        elif Path(path).suffix == '.tif':
+        elif suffix == '.tif':
             return rxr.open_rasterio(path)
         else:
-            raise RuntimeError('Non-recognized dataset format. Expects npy or tif.')  # noqa: E501
+            raise RuntimeError(f'Non-recognized dataset format: {suffix}. Expects .npy, .npz, or .tif')  # noqa: E501
 
     # -------------------------------------------------------------------------
     # get_filenames
@@ -73,5 +74,8 @@ class AbiToa3DCloudDataset(NonGeoDataset):
         """
         files_list = []
         for filename in sorted(os.listdir(path)):
-            files_list.append(os.path.join(path, filename))
+            filepath = os.path.join(path, filename)
+            # Only include files (not directories), and only supported formats
+            if os.path.isfile(filepath) and Path(filepath).suffix.lower() in ['.npy', '.npz', '.tif']:
+                files_list.append(filepath)
         return files_list
